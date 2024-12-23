@@ -1,0 +1,104 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $.Release.Name }}
+  labels:
+    {{- include "custom.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "custom.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "custom.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ $.Release.Name }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- with .Values.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}          
+        {{- if .Values.sqlproxy.enabled }}
+          env:
+            - name: URL_PREFIX
+              value: "/{{ .Values.virtualservice.prefix }}"
+            - name: DB_NAME
+              value: "{{ .Values.sqlproxy.db_name }}"
+            - name: DB_PORT
+              value: "{{ .Values.sqlproxy.db_port }}"
+            - name: DB_USER
+              value: "{{ .Values.sqlproxy.db_user }}"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-password
+                  key: db_password
+        - name: cloud-sql-proxy
+          image: "{{ .Values.sqlproxy.repository }}:{{ .Values.sqlproxy.tag }}"
+          args:
+            - "--structured-logs"
+            - "--address=0.0.0.0"
+            - "--port={{ .Values.sqlproxy.db_port }}"
+            - "{{ .Values.project_id }}:{{ .Values.region }}:{{ .Values.sqlproxy.db_instance }}"
+          resources:
+            {{- toYaml .Values.sqlproxy.resources | nindent 12 }}
+          securityContext:
+            runAsNonRoot: true
+        - name: postgres-client
+          image: postgres:15
+          command: [ "sleep", "infinity" ]
+          env:
+          - name: PGPASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: db-password
+                key: db_password
+        {{- end }}
+      {{- with .Values.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
