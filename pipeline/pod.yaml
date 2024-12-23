@@ -51,7 +51,7 @@ spec:
         - name: docker-sock
           mountPath: "/var/run/docker.sock"
     - name: golang
-      image: golang:1.21-alpine  
+      image: golang:1.21
       command:
       - cat
       tty: true
@@ -60,6 +60,8 @@ spec:
         value: "/go-cache"
       - name: GOMODCACHE
         value: "/go-modcache"
+      - name: GO111MODULE
+        value: "on"
       volumeMounts:
       - name: go-cache
         mountPath: /go-cache
