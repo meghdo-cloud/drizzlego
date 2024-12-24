@@ -44,6 +44,7 @@ func main() {
     dbPassword := os.Getenv("DB_PASSWORD")
     dbName := os.Getenv("DB_NAME")
     dbPort := os.Getenv("DB_PORT")
+    url := os.Getenv("URL_PREFIX")
     
     if dbPort == "" {
         dbPort = "5432"
@@ -80,7 +81,7 @@ func main() {
 
     // Router setup
     r := mux.NewRouter()
-    s := r.PathPrefix("/drizzlego").Subrouter()
+    s := r.PathPrefix(url).Subrouter()
     
     // Register routes
     s.HandleFunc("/isActive", healthCheckHandler).Methods("GET")
