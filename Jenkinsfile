@@ -16,11 +16,12 @@ commonPipeline (
         # Set up Go workspace
         export PATH="/usr/local/go/bin:$PATH"
         cd src
+        pwd
         go mod tidy
         go mod download
        
         # Build the application
-        CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o ${BASE_PATH}/${appName}_${GIT_BRANCH}/main .
+        CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o ./main .
         """
     }
 }   
