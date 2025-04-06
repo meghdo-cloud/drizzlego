@@ -110,7 +110,7 @@ tolerations: []
 affinity: {}
 
 virtualservice:
-  ingressGateway: istio-system/meghdo-4567-ingress-gateway
+  ingressGateway: istio-system/meghdo-ingress-gateway
   hosts: meghdo.cloud
   prefix: drizzlego
 
