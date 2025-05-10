@@ -73,7 +73,7 @@ spec:
       - name: workspace-volume
         mountPath: /home/jenkins/agent
     - name: infra-tools
-      image: meghdo/infra-tools:v1.0
+      image: alpine/helm:3.11.1
       command: ["sleep"]
       args: ["9999999"]
       volumeMounts:
@@ -88,3 +88,16 @@ spec:
           mountPath: /home/jenkins/agent
         - name: trivy-cache
           mountPath: /tmp
+    - name: gcp
+      image: gcr.io/google.com/cloudsdktool/google-cloud-cli:latest
+      imagePullPolicy: Always
+      command: ["sleep"]
+      args: ["9999999"]
+      securityContext:
+        runAsUser: 0
+        runAsGroup: 0
+      volumeMounts:
+        - name: workspace-volume
+          mountPath: /home/jenkins/agent
+        - name: docker-sock
+          mountPath: "/var/run/docker.sock" 
